@@ -24,14 +24,21 @@ defmodule MarsRover.Rover do
     GenServer.call(rover, {:commands, commands |> String.graphemes()})
   end
 
+  @spec position(atom() | pid()) :: any()
+  def position(rover), do: GenServer.call(rover, :position)
+
   # Callbacks
   @spec init(any()) :: {:ok, any()}
   def init(state), do: {:ok, state}
 
   def handle_call({:commands, commands}, _from, state) do
-    state = apply_commands(state, commands)
-    {:reply, {:ok, state.coordinates}, state}
+    case apply_commands(state, commands) do
+      {:error, info, new_state} -> {:reply, {:error, info}, new_state}
+      new_state                 -> {:reply, {:ok, new_state.coordinates}, new_state}
+    end
   end
+
+  def handle_call(:position, _from, state), do: {:reply, state.coordinates, state}
 
   # Helpers
   @spec apply_commands(any(), List.t()) :: any()
@@ -42,7 +49,7 @@ defmodule MarsRover.Rover do
 
     case MarsRover.Planet.has_obstacle?(state.planet, x, y) do
       false -> %{state | coordinates: {x, y}, direction: d} |> apply_commands(tail)
-      _     -> {:error, :obstacle}
+      _     -> {:error, {:obstacle, {x, y}}, state}
     end
   end
 
