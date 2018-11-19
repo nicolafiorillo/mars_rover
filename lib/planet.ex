@@ -23,9 +23,10 @@ defmodule MarsRover.Planet do
   end
 
   @spec has_obstacle?(atom() | pid(), Int.t(), Int.t()) :: any()
-  def has_obstacle?(planet, x, y) do
-    GenServer.call(planet, {:has_obstacle, x, y})
-  end
+  def has_obstacle?(planet, x, y), do: GenServer.call(planet, {:has_obstacle, x, y})
+
+  @spec normalize_coordinates(atom() | pid(), Int.t(), Int.t()) :: any()
+  def normalize_coordinates(planet, x, y), do: GenServer.call(planet, {:normalize, x, y})
 
   # Callbacks
 
@@ -45,6 +46,13 @@ defmodule MarsRover.Planet do
     y = to_planet_edges(y, height)
 
     {:reply, {x, y} in state.obstacles, state}
+  end
+
+  def handle_call({:normalize, x, y}, _from, %{grid: {width, height}} = state) do
+    x = to_planet_edges(x, width)
+    y = to_planet_edges(y, height)
+
+    {:reply, {x, y}, state}
   end
 
   # Privates
