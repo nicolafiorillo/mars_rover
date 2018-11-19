@@ -4,11 +4,15 @@ defmodule MarsRover.Rover do
   """
   use GenServer
 
+  defstruct [:planet, :coordinates, :direction]
+
   # Initialization
-  @spec start_link(atom() | pid(), Int.t(), Int.t()) :: :ignore | {:error, any()} | {:ok, pid()}
-  def start_link(planet, initial_x, initial_y) do
+  @spec start_link(atom() | pid(), Int.t(), Int.t(), atom()) :: :ignore | {:error, any()} | {:ok, pid()}
+  def start_link(planet, initial_x, initial_y, direction \\ :n) do
     case MarsRover.Planet.has_obstacle?(planet, initial_x, initial_y) do
-      false -> GenServer.start_link(__MODULE__, {planet, {initial_x, initial_y}})
+      false ->
+        state = %__MODULE__{planet: planet, coordinates: {initial_x, initial_y}, direction: direction}
+        GenServer.start_link(__MODULE__, state)
       _ -> {:error, :obstacle}
     end
   end
