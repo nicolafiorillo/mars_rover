@@ -26,6 +26,6 @@ If rover hits an obstacle, `MarsRover.Rover.commands/2` returns the obstacle pos
 
     {:error, {:obstacle, {3, 1}}} = MarsRover.Rover.commands(rover, "bbbbbbbbblff")
 
-You can get the last rover position coordinates using `MarsRover.Planet.Rover.position/1`:
+You can get the current rover position coordinates using `MarsRover.Planet.Rover.position/1`:
 
     {2, 1} = MarsRover.Rover.position(rover)
