@@ -11,17 +11,20 @@ defmodule MarsRover.Planet do
 
   @spec start_link(Int.t(), Int.t()) :: :ignore | {:error, any()} | {:ok, pid()}
   def start_link(width, height) when width <= 0 or height <= 0, do: {:error, :invalid_grid}
-
   def start_link(width, height) do
     state = %__MODULE__{grid: {width, height}, obstacles: []}
     GenServer.start_link(__MODULE__, state)
   end
 
-  @spec add_obstacle(pid(), Int.t(), Int.t()) :: any()
-  def add_obstacle(_pid, x, y) when x <= 0 or y <= 0, do: {:error, :invalid_coordinates}
+  @spec add_obstacle(atom() | pid(), Int.t(), Int.t()) :: any()
+  def add_obstacle(_planet, x, y) when x <= 0 or y <= 0, do: {:error, :invalid_coordinates}
+  def add_obstacle(planet, x, y) do
+    GenServer.call(planet, {:add_obstacle, x, y})
+  end
 
-  def add_obstacle(pid, x, y) do
-    GenServer.call(pid, {:add_obstacle, x, y})
+  @spec has_obstacle?(atom() | pid(), Int.t(), Int.t()) :: any()
+  def has_obstacle?(planet, x, y) do
+    GenServer.call(planet, {:has_obstacle, x, y})
   end
 
   # Callbacks
@@ -37,12 +40,17 @@ defmodule MarsRover.Planet do
     {:reply, res, state}
   end
 
+  def handle_call({:has_obstacle, x, y}, _from, %{grid: {width, height}} = state) do
+    x = to_planet_edges(x, width)
+    y = to_planet_edges(y, height)
+
+    {:reply, {x, y} in state.obstacles, state}
+  end
+
   # Privates
 
   # Add a new obstacle in grid, considering circular edges
-  defp handle_add_obstacle(x, y, state) when x <= 0 or y <= 0,
-    do: {{:error, :invalid_coordinates}, state}
-
+  defp handle_add_obstacle(x, y, state) when x <= 0 or y <= 0, do: {{:error, :invalid_coordinates}, state}
   defp handle_add_obstacle(x, y, state) do
     obstacles =
       [{x, y}]
